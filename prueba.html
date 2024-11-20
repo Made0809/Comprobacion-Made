@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventario de Productos</title>
+    <!--Estilos-->
+    <style>
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: white;
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        .product {
+            border: 1px solid white;
+            padding: 10px;
+            margin-bottom: 10px;
+            background-color: aliceblue;
+            display: flex;
+            align-items: center;
+            flex-direction: column;
+        }
+
+        .product button {
+            background-color: rgb(78, 240, 78);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            height: 50px;
+            cursor: pointer;
+        }
+
+        .product button:hover {
+            background-color: rgb(25, 123, 53);
+        }
+
+        #inventario {
+            margin-top: 20px;
+        }
+
+        #inventario ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        #inventario li {
+            background-color: #fff;
+            border: 1px solid #ddd;
+            margin-bottom: 5px;
+            padding: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-radius: 5px;
+        }
+
+        #inventario li button {
+            background-color: #ff4c4c;
+            border: none;
+            color: white;
+            cursor: pointer;
+            padding: 5px 10px;
+        }
+
+        #inventario li button:hover {
+            background-color: #e60000;
+        }
+
+        #cantidadProductos, #totalPrecio {
+            font-size: 1.2em;
+            margin-top: 20px;
+        }
+
+        #formularioProducto {
+            margin-top: 20px;
+        }
+
+        #formularioProducto input {
+            margin: 5px;
+            border-radius: 6px;
+            width: 200px;
+            height: 40px;
+        }
+
+        #formularioProducto button{
+            background-color: rgb(22, 210, 22);
+            cursor: pointer;
+            border: none;
+           height: 30px;
+           color: white;
+           border-radius: 7px;
+        }
+
+        #formularioProducto button:hover{
+            background-color: rgb(18, 128, 18);
+        }
+    </style>
+</head>
+<body>
+    <h1>Inventario de Productos</h1>
+
+    <!-- Formulario para agregar productos -->
+    <div id="formularioProducto">
+        <h2>Agregar Producto</h2>
+        <input type="text" id="nombreProducto" placeholder="Nombre del producto" required>
+        <input type="number" id="precioProducto" placeholder="Precio del producto" required min="0" step="0.01">
+        <input type="number" id="cantidadProducto" placeholder="Cantidad" required min="1" step="1">
+        <button onclick="agregarProductoDinamicamente()">Agregar Producto</button>
+    </div>
+
+    <!-- Id para vincularlo en el js-->
+    <h2>Lista de productos en el inventario</h2>
+    <div id="inventario">
+        <ul id="listaInventario"></ul>
+    </div>
+    <div id="cantidadProductos"></div>
+    <div id="totalPrecio"></div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Si localStorage está vacío, inicializar con un array vacío
+            if (!localStorage.getItem('inventario')) {
+                localStorage.setItem('inventario', JSON.stringify([]));
+            }
+
+            // Mostrar el inventario al cargar la página
+            mostrarInventario();
+        });
+
+        function agregarProductoDinamicamente() {
+            // Obtener los valores del formulario
+            const nombre = document.getElementById('nombreProducto').value;
+            const precio = parseFloat(document.getElementById('precioProducto').value);
+            const cantidad = parseInt(document.getElementById('cantidadProducto').value);
+
+            // Validar que los campos no estén vacíos y que la cantidad sea válida
+            if (nombre && !isNaN(precio) && precio >= 0 && !isNaN(cantidad) && cantidad >= 1) {
+                // Llamar a la función agregarAlInventario para agregar el nuevo producto
+                agregarAlInventario(nombre, precio, cantidad);
+
+                // Limpiar los campos del formulario
+                document.getElementById('nombreProducto').value = '';
+                document.getElementById('precioProducto').value = '';
+                document.getElementById('cantidadProducto').value = '';
+            } else {
+                alert('Por favor, ingresa un nombre, un precio y una cantidad válida.');
+            }
+        }
+
+        function agregarAlInventario(nombre, precio, cantidad) {
+            // Obtener el inventario actual desde localStorage
+            let inventario = JSON.parse(localStorage.getItem('inventario')) || [];
+            
+            // Agregar el nuevo producto al inventario
+            inventario.push({ nombre, precio, cantidad });
+            
+            // Guardar el inventario actualizado en localStorage
+            localStorage.setItem('inventario', JSON.stringify(inventario));
+            
+            // Mostrar el inventario actualizado
+            mostrarInventario();
+        }
+
+        function mostrarInventario() {
+            // Obtener el inventario desde localStorage
+            let inventario = JSON.parse(localStorage.getItem('inventario')) || [];
+            
+            // Obtener el elemento del DOM para la lista del inventario
+            const listaInventario = document.getElementById('listaInventario');
+            
+            // Limpiar la lista actual
+            listaInventario.innerHTML = '';
+            
+            let totalPrecio = 0; // Inicializamos la variable para el total del precio
+            let totalCantidad = 0; // Inicializamos la variable para la cantidad total
+
+            // Añadir cada producto del inventario a la lista
+            inventario.forEach((producto, index) => {
+                const li = document.createElement('li');
+                const precioTotal = (producto.precio * producto.cantidad).toFixed(2); // Precio total por producto
+                li.textContent = `${producto.nombre} - Precio: $${producto.precio} - Cantidad: ${producto.cantidad} - Total: $${precioTotal}`;
+                li.textContent = `${producto.nombre} - Precio: $${producto.precio} - Cantidad: ${producto.cantidad} - Total: $${precioTotal}`;
+
+
+                // Botón para eliminar el producto
+                const deleteButton = document.createElement('button');
+                deleteButton.textContent = 'Eliminar';
+                deleteButton.addEventListener('click', function() {
+                    eliminarDelInventario(index);
+                });
+
+                // Botón para modificar el precio o cantidad
+                const modificarButton = document.createElement('button');
+                modificarButton.textContent = 'Modificar Precio/Cantidad';
+                modificarButton.addEventListener('click', function() {
+                    modificarProducto(index);
+                });
+
+                // Añadir los botones al elemento de la lista
+                li.appendChild(deleteButton);
+                li.appendChild(modificarButton);
+
+                // Añadir el elemento de la lista al contenedor
+                listaInventario.appendChild(li);
+
+                // Acumular el precio total de todos los productos
+                totalPrecio += producto.precio * producto.cantidad;
+                totalCantidad += producto.cantidad;
+            });
+
+            // Mostrar la cantidad de productos en el inventario
+            document.getElementById('cantidadProductos').textContent = `Cantidad total de productos en el inventario: ${totalCantidad}`;
+            
+            // Mostrar el total del precio de todos los productos
+            document.getElementById('totalPrecio').textContent = `Total del precio: $${totalPrecio.toFixed(2)}`;
+        }
+
+        function eliminarDelInventario(index) {
+            // Obtener los productos del inventario desde localStorage
+            let inventario = JSON.parse(localStorage.getItem('inventario')) || [];
+            
+            // Eliminar el producto especificado
+            inventario.splice(index, 1);
+            
+            // Guardar el inventario actualizado en localStorage
+            localStorage.setItem('inventario', JSON.stringify(inventario));
+            
+            // Mostrar el inventario actualizado
+            mostrarInventario();
+        }
+
+        function modificarProducto(index) {
+            // Obtener los productos del inventario desde localStorage
+            let inventario = JSON.parse(localStorage.getItem('inventario')) || [];
+            
+            // Pedir al usuario que ingrese el nuevo precio y cantidad del producto
+            const nuevoPrecio = parseFloat(prompt("Ingresa el nuevo precio del producto:", inventario[index].precio));
+            const nuevaCantidad = parseInt(prompt("Ingresa la nueva cantidad del producto:", inventario[index].cantidad));
+
+            if (!isNaN(nuevoPrecio) && nuevoPrecio >= 0 && !isNaN(nuevaCantidad) && nuevaCantidad >= 1) {
+                // Modificar el precio y cantidad del producto en el inventario
+                inventario[index].precio = nuevoPrecio;
+                inventario[index].cantidad = nuevaCantidad;
+                
+                // Guardar el inventario actualizado en localStorage
+                localStorage.setItem('inventario', JSON.stringify(inventario));
+                
+                // Mostrar el inventario actualizado
+                mostrarInventario();
+            } else {
+                alert("Por favor, ingresa un precio y una cantidad válidos.");
+            }
+        }
+    </script>
+</body>
+</html>
